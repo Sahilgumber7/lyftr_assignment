@@ -8,8 +8,8 @@ else
   PY_CMD="python3"
 fi
 
-BACKEND_PORT=${BACKEND_PORT:-8000}   # default but overridable
-FRONTEND_PORT=""                    # we'll auto-detect this later
+BACKEND_PORT=${BACKEND_PORT:-8000}   
+FRONTEND_PORT=""                    
 
 # 1. Create venv if needed
 if [ ! -d ".venv" ]; then
