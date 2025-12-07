@@ -9,7 +9,7 @@ This is an MVP "universal website scraper" with a minimal JSON viewer frontend.
 - HTTP client: `httpx`
 - HTML parsing: `BeautifulSoup4` + `lxml`
 - JS rendering & interactions: Playwright (Python)
-- Frontend: Jinja2 template served by FastAPI
+- Frontend: React App using cra
 - Server runtime: `uvicorn`
 
 ## How to Run

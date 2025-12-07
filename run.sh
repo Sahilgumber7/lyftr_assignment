@@ -8,28 +8,69 @@ else
   PY_CMD="python3"
 fi
 
-# 1. Create virtual environment if it does not exist
+BACKEND_PORT=${BACKEND_PORT:-8000}   # default but overridable
+FRONTEND_PORT=""                    # we'll auto-detect this later
+
+# 1. Create venv if needed
 if [ ! -d ".venv" ]; then
   $PY_CMD -m venv .venv
 fi
 
-# 2. Activate the virtual environment
+# 2. Activate venv
 if [ -f ".venv/Scripts/activate" ]; then
-  # Windows (Git Bash)
   source .venv/Scripts/activate
 elif [ -f ".venv/bin/activate" ]; then
-  # Linux/mac
   source .venv/bin/activate
 else
   echo "Could not find virtual environment activation script."
   exit 1
 fi
 
-# 3. Install dependencies
+echo "Backend environment ready."
+
+# 3. Install backend dependencies
 python -m pip install -r requirements.txt
 
-# 4. Install Playwright browsers
+# 4. Install Playwright
 python -m playwright install || true
 
-# 5. Start the FastAPI server
-exec uvicorn app.main:app --host 0.0.0.0 --port 8000
+# 5. Start backend (in background)
+echo "Starting FastAPI backend..."
+uvicorn app.main:app --host 0.0.0.0 --port $BACKEND_PORT &
+BACKEND_PID=$!
+
+echo "Backend started on port $BACKEND_PORT"
+
+# 6. Start frontend
+echo "Starting React frontend..."
+cd scraper-frontend
+npm install
+
+# Capture frontend logs and detect port dynamically
+npm start 2>&1 | tee frontend.log &
+FRONTEND_PID=$!
+cd ..
+
+# Wait until React logs the port (3000/3001/etc.)
+echo "Waiting for frontend to report its port..."
+
+while [ -z "$FRONTEND_PORT" ]; do
+  if grep -q "Local:" scraper-frontend/frontend.log; then
+    FRONTEND_PORT=$(grep "Local:" scraper-frontend/frontend.log | head -1 | sed 's/.*http:\/\/localhost://')
+  fi
+  sleep 1
+done
+
+echo ""
+echo "=========================================="
+echo "Both servers are now running:"
+echo ""
+echo "Frontend: http://localhost:${FRONTEND_PORT}"
+echo "Backend API: http://localhost:${BACKEND_PORT}"
+echo "Backend Docs: http://localhost:${BACKEND_PORT}/docs"
+echo ""
+echo "Press CTRL+C to stop everything."
+echo "=========================================="
+echo ""
+
+wait
