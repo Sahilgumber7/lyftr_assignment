@@ -7,13 +7,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from .api.routes_health import router as health_router
 from .api.routes_scrape import router as scrape_router
 
-# 1. Create the FastAPI app
 app = FastAPI(title="Lyftr Universal Scraper MVP")
 
-# 2. Add CORS middleware (for e.g. if you hit it from 5500 or other origins)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],       # you can restrict this later if you want
+    allow_origins=["*"],       
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
