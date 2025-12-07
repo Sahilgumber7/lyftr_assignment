@@ -59,10 +59,13 @@ These URLs were used during development and represent a good spread of webpage t
   - Click-flow detection  
   - JS-rendered DOM extraction  
 
-### 3. https://news.ycombinator.com/
-- Pagination-heavy list site  
-- Minimal JS  
+### 3. https://www.github.com/
+- Hybrid static + dynamic 
 - Good for testing:
-  - Pagination via scrolling  
-  - Link extraction  
-  - Section grouping for list content  
+  - Navigation stability   
+  - Structured extraction   
+
+
+
+
+
