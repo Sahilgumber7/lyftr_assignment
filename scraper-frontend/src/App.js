@@ -12,9 +12,8 @@ function App() {
 
   const showToast = (msg) => setToastMessage(msg);
 
-  // ------------------------------
-  // URL VALIDATOR (STRONG VERSION)
-  // ------------------------------
+  // URL Validation
+
   const isValidURL = (input) => {
     if (!input) return false;
 
@@ -30,7 +29,6 @@ function App() {
 
       if (!host) return false;
 
-      // Allow localhost
       if (host === "localhost") return true;
 
       // Allow IPv4
@@ -52,9 +50,7 @@ function App() {
     }
   };
 
-  // ------------------------------
-  // AUTO HTTPS
-  // ------------------------------
+  // Auto-add https://
   const normalizeUrl = (input) => {
     if (!input) return "";
     let clean = input.trim();
@@ -65,9 +61,7 @@ function App() {
     return clean;
   };
 
-  // ------------------------------
-  // SCRAPE HANDLER
-  // ------------------------------
+  // Scrape handler
   const handleScrape = async () => {
     const original = url.trim();
 
@@ -91,8 +85,7 @@ function App() {
     }
   };
 
-  // ENTER KEY GLOBAL LISTENER
-  
+  //listener for enter key
   useEffect(() => {
     const onEnter = (e) => {
       if (e.key === "Enter") {
@@ -111,9 +104,7 @@ function App() {
     return () => window.removeEventListener("keydown", onEnter);
   }, [url]);
 
-  // ------------------------------
   // DOWNLOAD JSON
-  // ------------------------------
   const downloadJSON = () => {
     if (!result) return;
 
@@ -131,21 +122,18 @@ function App() {
     showToast("JSON downloaded 📄");
   };
 
-  // ------------------------------
 
   return (
     <div className="min-h-screen bg-black text-gray-200 flex justify-center px-4 py-10 relative">
 
-      {/* Toast */}
       <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
 
       <div className="w-full max-w-4xl space-y-6">
 
-        {/* Badge */}
         <div className="flex items-center justify-between mb-2">
           <div className="inline-flex items-center gap-2 rounded-full bg-black/50 border border-gray-700 px-3 py-1 text-xs text-gray-400">
             <span className="inline-block h-2 w-2 rounded-full bg-green-600 animate-pulse" />
-            <span>Lyftr Universal Scraper · MVP</span>
+            <span>Universal Scraper · MVP</span>
           </div>
 
           {hostname && (
@@ -153,7 +141,6 @@ function App() {
           )}
         </div>
 
-        {/* Main Card */}
         <div
           className="rounded-2xl border border-gray-700 bg-black/80 shadow-xl shadow-black/80
                      backdrop-blur-sm p-5 sm:p-7 space-y-6 hover:border-green-700/50
@@ -169,7 +156,6 @@ function App() {
             </p>
           </div>
 
-          {/* URL Input */}
           <div className="space-y-3">
             <label className="text-xs text-gray-400 uppercase tracking-wide">Target URL</label>
 
@@ -200,7 +186,6 @@ function App() {
               </button>
             </div>
 
-            {/* Suggested URLs */}
             <div className="flex flex-wrap gap-2">
               {SUGGESTED_URLS.map((u) => (
                 <button
@@ -219,25 +204,21 @@ function App() {
             </div>
           </div>
 
-          {/* Error */}
           {error && (
             <div className="rounded-xl border border-red-600 bg-red-950/80 px-3 py-2 text-sm text-red-200">
               {error}
             </div>
           )}
 
-          {/* Empty */}
-          {!result && !loading && !error && (
+\          {!result && !loading && !error && (
             <div className="rounded-xl border border-gray-700 border-dashed bg-black/40 px-4 py-6 text-sm text-gray-500">
               Run your first scrape to view structured metadata and sections.
             </div>
           )}
 
-          {/* Result Output */}
           {result && (
             <div className="space-y-6">
 
-              {/* Meta */}
               <section className="rounded-xl border border-gray-700 bg-black/60 p-4 shadow-[0_0_15px_rgba(0,255,140,0.08)]">
                 <p className="text-green-400 font-semibold mb-2">Metadata</p>
 
@@ -247,7 +228,6 @@ function App() {
                 <p><span className="font-semibold text-gray-300">Language:</span> {result.meta.language}</p>
               </section>
 
-              {/* Interactions */}
               <section className="rounded-xl border border-gray-700 bg-black/60 p-4 shadow-[0_0_15px_rgba(0,255,140,0.08)]">
                 <p className="text-green-400 font-semibold mb-2">Interactions</p>
                 <pre className="bg-black/80 border border-gray-700 p-2 rounded-lg text-xs overflow-auto max-h-48">
@@ -255,7 +235,6 @@ function App() {
                 </pre>
               </section>
 
-              {/* Download JSON */}
               <button
                 onClick={downloadJSON}
                 className="w-full rounded-lg bg-black/50 border border-gray-700 hover:border-green-600
