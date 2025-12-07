@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Universal Website Scraper</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 1rem;
+      background: #0f172a;
+      color: #e5e7eb;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.5rem;
+      border: 1px solid #4b5563;
+      background: #020617;
+      color: #e5e7eb;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: none;
+      background: #22c55e;
+      color: #022c22;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: progress;
+    }
+    .error {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      background: #7f1d1d;
+      color: #fecaca;
+      display: none;
+    }
+    .meta, .interactions {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      background: #020617;
+      border: 1px solid #1f2937;
+      font-size: 0.9rem;
+    }
+    .sections {
+      margin-top: 1rem;
+    }
+    details {
+      margin-bottom: 0.5rem;
+      border-radius: 0.5rem;
+      background: #020617;
+      border: 1px solid #1f2937;
+      padding: 0.5rem 0.75rem;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      outline: none;
+    }
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.8rem;
+      background: #020617;
+      color: #e5e7eb;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      overflow-x: auto;
+    }
+    .download {
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Universal Website Scraper</h1>
+  <p style="color:#9ca3af; font-size:0.9rem;">
+    Enter any http(s) URL. We'll scrape it, attempt JS rendering and basic interactions,
+    then show you section-aware JSON.
+  </p>
+
+  <label for="url">URL</label>
+  <input id="url" type="text" placeholder="https://example.com" />
+
+  <div>
+    <button id="scrapeBtn">Scrape</button>
+    <span id="loading" style="margin-left:0.5rem; display:none;">Loading…</span>
+  </div>
+
+  <div id="errorBox" class="error"></div>
+
+  <div id="metaBox" class="meta" style="display:none;"></div>
+  <div id="interactionsBox" class="interactions" style="display:none;"></div>
+
+  <div class="download">
+    <button id="downloadBtn" style="display:none;">Download JSON</button>
+  </div>
+
+  <div id="sectionsBox" class="sections"></div>
+</div>
+
+<script>
+  const scrapeBtn = document.getElementById("scrapeBtn");
+  const loading = document.getElementById("loading");
+  const errorBox = document.getElementById("errorBox");
+  const metaBox = document.getElementById("metaBox");
+  const interactionsBox = document.getElementById("interactionsBox");
+  const sectionsBox = document.getElementById("sectionsBox");
+  const downloadBtn = document.getElementById("downloadBtn");
+  const urlInput = document.getElementById("url");
+
+  let lastResult = null;
+
+  async function scrape() {
+    const url = urlInput.value.trim();
+    if (!url) {
+      alert("Please enter a URL");
+      return;
+    }
+
+    scrapeBtn.disabled = true;
+    loading.style.display = "inline";
+    errorBox.style.display = "none";
+    metaBox.style.display = "none";
+    interactionsBox.style.display = "none";
+    sectionsBox.innerHTML = "";
+    downloadBtn.style.display = "none";
+    lastResult = null;
+
+    try {
+      const res = await fetch("http://localhost:8000/scrape", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url })
+      });
+
+      const text = await res.text();
+      let data = null;
+
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch (e) {
+        throw new Error(
+          `Server returned a non-JSON response (status ${res.status}). ` +
+          `Body (truncated): ${text.slice(0, 200)}`
+        );
+      }
+
+      if (!res.ok) {
+        const detail = data && data.detail ? data.detail : `Request failed with status ${res.status}`;
+        throw new Error(detail);
+      }
+
+      if (!data || !data.result) {
+        throw new Error("Server returned an unexpected response shape.");
+      }
+
+      const result = data.result;
+      lastResult = result;
+
+      // Meta
+      metaBox.style.display = "block";
+      metaBox.innerHTML = `
+        <strong>URL:</strong> ${result.url}<br/>
+        <strong>Scraped at:</strong> ${result.scrapedAt}<br/>
+        <strong>Title:</strong> ${result.meta.title || "(none)"}<br/>
+        <strong>Description:</strong> ${result.meta.description || "(none)"}<br/>
+        <strong>Language:</strong> ${result.meta.language}<br/>
+        <strong>Canonical:</strong> ${result.meta.canonical || "(none)"}
+      `;
+
+      // Interactions
+      interactionsBox.style.display = "block";
+      interactionsBox.innerHTML = `
+        <strong>Interactions</strong><br/>
+        <strong>Pages (${result.interactions.pages.length}):</strong>
+        <pre>${JSON.stringify(result.interactions.pages, null, 2)}</pre>
+        <strong>Clicks (${result.interactions.clicks.length}):</strong>
+        <pre>${JSON.stringify(result.interactions.clicks, null, 2)}</pre>
+        <strong>Scrolls:</strong> ${result.interactions.scrolls}<br/>
+        <strong>Errors (${result.errors.length}):</strong>
+        <pre>${JSON.stringify(result.errors, null, 2)}</pre>
+      `;
+
+      // Sections
+      sectionsBox.innerHTML = "";
+      result.sections.forEach((sec, idx) => {
+        const details = document.createElement("details");
+        if (idx === 0) details.open = true;
+        const summary = document.createElement("summary");
+        summary.textContent = `${sec.label} (${sec.type})`;
+        details.appendChild(summary);
+
+        const pre = document.createElement("pre");
+        pre.textContent = JSON.stringify(sec, null, 2);
+        details.appendChild(pre);
+        sectionsBox.appendChild(details);
+      });
+
+      downloadBtn.style.display = "inline-block";
+    } catch (err) {
+      errorBox.style.display = "block";
+      errorBox.textContent = err.message || String(err);
+    } finally {
+      scrapeBtn.disabled = false;
+      loading.style.display = "none";
+    }
+  }
+
+  scrapeBtn.addEventListener("click", scrape);
+  urlInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      scrape();
+    }
+  });
+
+  downloadBtn.addEventListener("click", () => {
+    if (!lastResult) return;
+    const blob = new Blob([JSON.stringify({ result: lastResult }, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "scrape-result.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+</script>
+</body>
+</html>
